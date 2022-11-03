@@ -1,0 +1,157 @@
+TITLE Gabriel Lopes (RA: 22002381) e José Pascoal (RA: 22002728)
+.MODEL SMALL
+.DATA
+    msg1 DB 10, "Digite o primeiro numero: $"
+    msg2 DB 10, "Digite o segundo numero: $"
+    msg3 DB 10, "Digite a operacao que deseja utilizar: ", 10,"(+) -> soma",10,"(-) -> subtracao", 10, "(*) -> multiplicacao", 10,"(/) -> Divisao",10,10,"Digite aqui -> $"
+    msg4 DB 10, "O resultado eh: $"
+
+.CODE
+MAIN PROC
+
+MOV AX,@DATA            ;INICIALIZAÇÃO DO DATA
+MOV DS,AX               ;COLOCANDO O ENDERÇO BASE DO SEGMENTO EM DS
+MOV AH,09H
+MOV DX, offset msg3     ;deixando a interface confortável
+INT 21H
+MOV AH, 01              ;LENDO CL - LENDO COMANDO
+INT 21h
+MOV CL, AL
+MOV AH,09               ;PREPARANDO FUNÇÃO IMPRIMIR STRING
+LEA DX, msg1            ;APONTA DX PARA O ENDEREÇO DO CONTEÚDO DE msg1
+INT 21H                 ;IMPRIME STRING msg1
+MOV AH, 01              ;PREPARAÇÃO FUNÇÃO LEITURA
+INT 21h                 ;LEITURA DE BL - PRIMEIRO NÚMERO
+MOV BL, AL              ;MOVENDO O CONTEÚDO DE AL PARA BL
+MOV AH, 09              ;PREPARANDO FUNÇÃO IMPRIMIR STRING
+LEA DX, msg2            ;APONTA DX PARA O ENDEREÇO DO CONTEÚDO DE msg2
+INT 21H                 ;IMPRIME STRING msg2
+MOV AH, 01              ;PREPARAÇÃO FUNÇÃO LEITURA
+INT 21h                 ;LEITURA DE BH - SEGUNDO NÚMERO
+MOV BH, AL              ;MOVENDO O CONTEÚDO DE AL PARA BH
+
+CALL SOMA
+CALL SUBTRACAO
+CALL MULTIPLICACAO 
+
+MOV AH,4Ch
+INT 21h
+
+MAIN endp
+
+SOMA PROC
+
+CMP CL,'+'              ;VERIFICAÇÃO DA OPERAÇÃO
+JNE NEXT
+
+ADD BL, BH
+MOV AL, BL
+MOV AH, 0
+AAA
+MOV BX,AX
+ADD BH, 30H
+ADD BL, 30H
+MOV AH, 09H
+LEA DX, msg4
+INT 21H
+MOV AH, 02H
+MOV DL, BH
+INT 21H
+MOV AH, 02H
+MOV DL, BL
+INT 21H
+
+NEXT: 
+    RET
+
+SOMA endp
+
+SUBTRACAO PROC
+
+CMP CL,'-'
+JNE NEXT1
+
+SUB BL, 30H
+SUB BH, 30H
+CMP BH, BL
+JB POSITIVO     
+SUB BH, BL
+ADD BH, 30H
+ADD BL, 30H
+MOV AH, 09H
+LEA DX, msg4
+INT 21H
+MOV AH, 02H
+MOV DX, '-'
+INT 21H
+MOV AH, 02H
+MOV DL, BH
+INT 21H
+MOV AX, 04H
+INT 21H
+RET
+
+POSITIVO:
+    SUB BL, BH
+    MOV BH, 0
+
+ADD BH, 30H
+ADD BL, 30H
+MOV AH, 09H
+LEA DX, msg4
+INT 21H
+MOV AH, 02H
+MOV DL, BH
+INT 21H
+MOV AH, 02H
+MOV DL, BL
+INT 21H
+NEXT1:
+    RET
+SUBTRACAO endp
+
+MULTIPLICACAO PROC
+
+CMP CL,'*'
+JNE NEXT2
+
+AND BL,0FH
+AND BH,0FH
+
+XCHG BH,BL      ;MULTIPLICADOR EM BH
+MOV CL,BH
+XOR BH,BH
+MOV DX,CX       ;MULTIPLICANDO EM DX
+
+XOR AX,AX       ;PRODUTO
+XOR CX,CX       ;ZERANDO CX
+MOV CX,8        ;CONTADOR
+
+VOLTA:
+    SHR BL, 1
+    JNC FINAL
+    ADD AX,DX
+    FINAL:
+        SHL DX, 1
+        LOOP VOLTA
+
+XCHG CX,AX
+MOV AH, 09H
+LEA DX, msg4
+INT 21H
+XCHG AX,CX
+MOV BL,10
+DIV BL
+MOV DL,AL
+MOV DH,AH
+MOV AH, 02
+OR  DL, 30H
+INT 21h
+MOV DL, DH
+OR DL,30H 
+INT 21H
+NEXT2:
+    RET
+
+MULTIPLICACAO endp
+END MAIN
