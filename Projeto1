@@ -158,29 +158,30 @@ MULTIPLICACAO endp
 
 DIVISAO PROC
 
-CMP CL,'/'
+CMP CL,'!'
 JNE NEXT3
 
 XOR AX,AX           ;DIVIDENDO
 AND BL,0FH
-OR AL,BL
-XOR BL,BL           ;BH - DIVISOR
-XOR DL,DL           
+MOV AL,BL           
 AND BH,0FH          ;QUOCIENTE
+XOR BL,BL           ;BH - DIVISOR
+XOR DL,DL
+MOV CX,9            ;CONTADOR
 
 
-DIVI:
+DIVI: 
 
       SUB AX,BX 
       JGE PULA
       ADD AX,BX
       MOV DH,0
-      JMP PULA 1
+      JMP PULA1
 PULA:
       MOV DH,1      ;quociente
 PULA1:
       SHL DL,1
-      OR DL,DH  dl,dh
+      OR DL,DH 
       SHR BX,1
       LOOP  DIVI
 
@@ -188,9 +189,14 @@ OR DL,30h
 OR AL,30H
 
 MOV CL,DL
+MOV CH,AL
+
+MOV AH, 09H
+LEA DX, msg4
+INT 21H
 
 MOV AH,02 
-MOV DL,AL
+MOV DL,CH
 INT 21H
 
 MOV AH,02 
